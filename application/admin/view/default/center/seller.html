@@ -1,0 +1,158 @@
+{extend name="public/base" /}
+
+{block name="body"}
+	<!-- 标题栏 -->
+	<div class="main-title">
+		<h2>商家活动</h2>
+	</div>
+	<div class="cf">
+		<div class="fl">
+            <a class="btn" href="{:url('article/add?cate_id=46&pid=0&model_id=1')}">新 增</a>
+
+            <button class="btn ajax-post confirm" url="{:url('changeStatus?method=deleteUser')}" target-form="ids">删 除</button>
+        </div>
+
+        <!-- 高级搜索 -->
+		<div class="search-form fr cf">
+			<div class="sleft">
+				<input type="text" name="nickname" class="search-input" value="{:input('nickname')}" placeholder="请输入用户昵称或者ID">
+				<a class="sch-btn" href="javascript:;" id="search" url="{:url('index')}"><i class="btn-search"></i></a>
+			</div>
+		</div>
+    </div>
+    <!-- 数据列表 -->
+    <div class="data-table table-striped">
+	<table class="">
+    <thead>
+        <tr>
+		<th class="row-selected row-selected"><input class="check-all" type="checkbox"/></th>
+		<th class="">UID</th>
+		<th class="">标题</th>
+		<th class="">开始时间</th>
+		<th class="">结束时间</th>
+		<th class="">浏览次数</th>
+		<th class="">状态</th>
+		<th class="">操作</th>
+		</tr>
+    </thead>
+    <tbody>
+		{notempty name="_list"}
+		{volist name="_list" id="vo"}
+		<tr>
+            <td><input class="ids" type="checkbox" name="id[]" value="{$vo.uid}" /></td>
+			<td>{$vo.id} </td>
+			<td>{$vo.title} </td>
+			<td><span><?=date('Y-m-d H:i:s',$vo['create_time'])?></span></td>
+			<td><span><?=date('Y-m-d H:i:s',$vo['deadline'])?></span></td>
+			<td>{$vo.view}</td>
+
+
+			<td>
+				<a class="btn static" href="javascript: ;" id="{$vo.id}" static="{$vo.status}">
+					<?php
+              if(($vo['create_time']<time())&&($vo['deadline']>time()))
+              {
+              echo '活动进行中';
+              }elseif($vo['deadline'] < time())
+              {
+              echo '活动已结束';
+              }else{
+					echo '活动未开始';
+					};
+?>
+				</a>
+			</td>
+
+			<td>
+				<a class="btn status" href="javascript: ;" id="{$vo.id}" status="{$vo.status}">
+					{switch name="$vo.status"}
+					{case value="0"}
+					立即发布
+					{/case}
+					{case value="1"}
+					取消活动
+					{/case}
+					{case value="-1"}
+					已过期
+					{/case}
+					{/switch}
+				</a>
+				<a title="编辑" href="{:url('edit?id='.$vo['id'])}">编辑</a>
+                <a href="{:url('Center/del?id='.$vo['id'])}" class="confirm ajax-get">删除</a>
+                </td>
+		</tr>
+		{/volist}
+		{else/}
+		<td colspan="9" class="text-center"> aOh! 暂时还没有内容! </td>
+		{/notempty}
+	</tbody>
+    </table>
+	</div>
+<script type="text/javascript">
+	$('.status').click(function () {
+
+	    var val = $(this).attr('status');
+       var  id = $(this).attr('id');
+
+       var that = this;
+       //console.debug(val);
+       if(val=='0')
+       {
+           if(confirm('是否发布活动?'))
+           {
+               $.getJSON('ajax_activity',{id:id},function (data) {
+
+                   $(that).text('取消活动');
+                   $(that).attr('status','1');
+               })
+           }
+
+	   }
+	   if(val=='1')
+	   {
+	       if(confirm('确定取消活动?'))
+	       {$.getJSON('ajax_activity',{id:id},function (data) {
+               $(that).text('立即发布');
+               $(that).attr('status','0');
+           })
+
+		   }
+
+	   }
+
+    })
+</script>
+
+    <div class="page">
+		{$_list->render()}
+    </div>
+{/block}
+
+{block name="script"}
+	<script src="__PUBLIC__/static/thinkbox/jquery.thinkbox.js"></script>
+
+	<script type="text/javascript">
+	//搜索功能
+	$("#search").click(function(){
+		var url = $(this).attr('url');
+        var query  = $('.search-form').find('input').serialize();
+        query = query.replace(/(&|^)(\w*?\d*?\-*?_*?)*?=?((?=&)|(?=$))/g,'');
+        query = query.replace(/^&/g,'');
+        if( url.indexOf('?')>0 ){
+            url += '&' + query;
+        }else{
+            url += '?' + query;
+        }
+		window.location.href = url;
+	});
+	//回车搜索
+	$(".search-input").keyup(function(e){
+		if(e.keyCode === 13){
+			$("#search").click();
+			return false;
+		}
+	});
+    //导航高亮
+    highlight_subnav('{:url('Center/index')}');
+	</script>
+{/block}
